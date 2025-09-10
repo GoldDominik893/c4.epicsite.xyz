@@ -1,44 +1,691 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Has Dominic Wajda's Battery Exploded?</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Battery Status · c4.epicsite.xyz</title>
+
+  <!-- Fonts: Inter feels close to SF Pro; system fallbacks included -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- AOS (Animate On Scroll) -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+
+  <style>
+    /* ============================
+       CSS VARIABLES & THEME
+       ============================ */
+    :root {
+      /* Core palette */
+      --bg: #070b14;             /* Deep space */
+      --bg-elev-1: #0b1120;      /* Card bg */
+      --bg-elev-2: #111827;      /* Hover bg */
+      --text: #e5e7eb;           /* Primary text */
+      --muted: #9aa4b2;          /* Secondary text */
+      --accent: #00f7a7;         /* Neon mint */
+      --accent-2: #6ee7ff;       /* Cyan glow */
+      --danger: #ef4444;         /* Red alert */
+      --warning: #f59e0b;        /* Amber */
+
+      /* Shadows & radii */
+      --shadow-soft: 0 10px 30px rgba(0,0,0,0.35);
+      --shadow-hard: 0 12px 48px rgba(0,0,0,0.6);
+      --radius: 16px;
+
+      /* Layout */
+      --maxw: 1200px;
+      --gutter: 24px;
+    }
+
+    /* Global reset */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+      color: var(--text);
+      background: 
+                  radial-gradient(800px 600px at 120% 10%, #0f1f2d 0%, transparent 55%),
+                  var(--bg);
+      line-height: 1.6;
+      scroll-behavior: smooth;
+    }
+
+    /* Utilities */
+    .container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
+    .grid { display: grid; gap: 32px; }
+    .btn { display:inline-flex; align-items:center; gap:10px; padding:12px 18px; border-radius:999px; border:1px solid rgba(255,255,255,0.08); background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); color:var(--text); text-decoration:none; font-weight:600; box-shadow: var(--shadow-soft); backdrop-filter: blur(6px); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.16); box-shadow: var(--shadow-hard); }
+    .btn-cta { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color:#00110b; border:none; }
+    .tag { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#0e1626; border:1px solid #142344; color:var(--muted); font-size:12px; }
+    .muted { color: var(--muted); }
+
+    /* ============================
+       NAVIGATION (Sticky + ScrollSpy)
+       ============================ */
+    .nav-wrap { position: sticky; top: 0; z-index: 50; background: rgba(7,11,20,0.55); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .nav { display:flex; align-items:center; justify-content:space-between; height:64px; }
+    .brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); font-weight:800; letter-spacing:0.2px; }
+    .brand svg { width:28px; height:28px; }
+    .nav-links { display:flex; align-items:center; gap: 18px; }
+    .nav-links a { color: var(--muted); text-decoration:none; padding:8px 10px; border-radius:8px; transition: background .2s ease, color .2s ease; }
+    .nav-links a.active, .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+    /* Mobile menu */
+    .menu-btn { display:none; width:40px; height:40px; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.12); border-radius:10px; background:transparent; color:var(--text); }
+    .mobile-menu { display:none; position:fixed; inset:64px 0 0 0; background:rgba(7,11,20,0.95); backdrop-filter: blur(10px); padding:24px; }
+    .mobile-menu a { display:block; padding:12px 10px; color:var(--muted); text-decoration:none; border-radius:8px; }
+    .mobile-menu a:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+    @media (max-width: 900px) {
+      .nav-links { display:none; }
+      .menu-btn { display:inline-flex; }
+    }
+
+    /* ============================
+       BACKGROUND PARTICLES (Canvas)
+       ============================ */
+    #bg-canvas { position: fixed; inset: 0; width:100%; height:100%; z-index: -1; }
+
+    /* ============================
+       HERO SECTION
+       ============================ */
+    .hero { padding: 96px 0 64px 0; 
+    background: radial-gradient(1200px 800px at 10% -10%, #162036 0%, transparent 60%);
+    }
+    .hero .content { display:grid; grid-template-columns: 1.2fr 1fr; gap:40px; align-items:center; }
+    .eyebrow { font-size:12px; letter-spacing:1.4px; text-transform:uppercase; color:var(--muted); display:inline-flex; align-items:center; gap:8px; }
+    .eyebrow .dot { width:6px; height:6px; border-radius:50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .title { font-size: clamp(32px, 6vw, 64px); font-weight: 800; line-height: 1.1; margin: 12px 0 8px; }
+    .subtitle { font-size: clamp(16px, 2vw, 18px); color: var(--muted); max-width: 52ch; }
+    .status-row { display:flex; align-items:center; gap:16px; margin: 22px 0 28px; }
+    .status-badge { display:inline-flex; align-items:center; gap:10px; border-radius:999px; padding:8px 12px; font-weight:700; background:rgba(0,247,167,0.12); border:1px solid rgba(0,247,167,0.35); color:#8affd9; }
+    .status-dot { width:10px; height:10px; border-radius:50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
+    .updated { font-size: 13px; color: var(--muted); }
+
+    .media { position: relative; }
+    .hero-card { border:1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow-soft); }
+    .hero-card img { width:100%; height:auto; border-radius: 12px; display:block; }
+    .glow-ring { position:absolute; inset:auto -120px -120px auto; width:320px; height:320px; background: radial-gradient(closest-side, rgba(0,247,167,0.25), rgba(0,247,167,0)); filter: blur(18px); pointer-events:none; }
+
+    @media (max-width: 980px) { .hero .content { grid-template-columns: 1fr; } }
+
+    /* ============================
+       FEATURES SECTION
+       ============================ */
+    .features { padding: 56px 0 24px 0; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; margin-bottom: 18px; }
+    .section-head h2 { font-size: 24px; letter-spacing: 0.2px; }
+    .cards { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; }
+    .card { position:relative; border:1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border-radius: 16px; padding: 18px; min-height: 160px; overflow:hidden; transition: transform .25s ease, border-color .25s ease; }
+    .card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.18); }
+    .card h3 { margin: 6px 0 6px; font-size: 18px; }
+    .card p { color: var(--muted); font-size: 14px; }
+    .card .icon { width: 28px; height: 28px; display:grid; place-items:center; border-radius: 8px; background: rgba(0,247,167,0.12); border: 1px solid rgba(0,247,167,0.3); color: var(--accent); }
+    .card .corner-glow { position:absolute; right:-40px; bottom:-40px; width:140px; height:140px; pointer-events:none; background: radial-gradient(closest-side, rgba(0,247,167,0.18), rgba(0,247,167,0)); filter: blur(12px); }
+
+    @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 640px) { .cards { grid-template-columns: repeat(1, minmax(0,1fr)); } }
+
+    /* ============================
+       SHOWCASE / GALLERY (Carousel + Lightbox)
+       ============================ */
+    .showcase { padding: 48px 0; }
+    .carousel { position:relative; border-radius: var(--radius); overflow:hidden; border:1px solid rgba(255,255,255,0.08); box-shadow: var(--shadow-soft); }
+    .carousel-track { display:flex; transition: transform .5s ease; }
+    .carousel-slide { min-width: 100%; aspect-ratio: 16/9; position:relative; background:#0e1626; display:grid; place-items:center; }
+    .carousel-slide img { width:100%; height:100%; object-fit:cover; display:block; }
+    .c-btn { position:absolute; top:50%; transform: translateY(-50%); border:none; background: rgba(0,0,0,0.35); color:#fff; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; cursor:pointer; transition: background .2s ease; }
+    .c-btn:hover { background: rgba(0,0,0,0.55); }
+    .c-prev { left:12px; } .c-next { right:12px; }
+    .dots { display:flex; gap:10px; justify-content:center; padding:14px; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#2b3448; border:1px solid #3b4660; cursor:pointer; }
+    .dot.active { background: var(--accent); border-color: transparent; }
+
+    /* Lightbox */
+    .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.84); display:none; align-items:center; justify-content:center; z-index: 99; padding:24px; }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width: 92vw; max-height: 86vh; border-radius: 12px; box-shadow: var(--shadow-hard); }
+    .lightbox .close { position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#fff; width:42px; height:42px; border-radius:50%; display:grid; place-items:center; cursor:pointer; }
+
+    /* ============================
+       TECH SPECS GRID
+       ============================ */
+    .specs { padding: 46px 0; }
+    .spec-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .spec { border:1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0)); }
+    .spec h4 { margin: 2px 0 6px; font-size: 16px; }
+    .spec .kpi { font-size: 28px; font-weight: 800; letter-spacing: 0.2px; }
+    .spec p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+
+    @media (max-width: 900px) { .spec-grid { grid-template-columns: 1fr; } }
+
+    /* ============================
+       SAFETY BAND
+       ============================ */
+    .safety { padding: 28px 0; }
+    .band { position:relative; border-radius: 14px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); }
+    .band-inner { display:flex; align-items:center; gap: 22px; padding: 18px; background: linear-gradient(90deg, rgba(239,68,68,0.10), rgba(239,68,68,0.02)); }
+    .band .icon { width: 36px; height:36px; display:grid; place-items:center; border-radius: 10px; border:1px solid rgba(239,68,68,0.45); background: rgba(239,68,68,0.12); color:#ffd1d1; }
+    .band p { margin:0; color:#ffd1d1; }
+
+    /* ============================
+       TIMELINE
+       ============================ */
+    .timeline { padding: 54px 0; }
+    .tl { position:relative; margin: 8px 0 0 0; }
+    .tl::before { content:""; position:absolute; left: 18px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0)); }
+    .tli { position:relative; display:flex; gap:14px; padding:18px 0 18px 0; }
+    .tli .dot { position:relative; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); margin-left: 12px; }
+    .tli .content { padding-left: 14px; }
+    .tli h5 { margin:0; font-size: 15px; }
+    .tli p { margin:6px 0 0; color: var(--muted); font-size: 14px; }
+
+    /* ============================
+       FAQ (Accordion)
+       ============================ */
+    .faq { padding: 52px 0; }
+    .accordion { display:grid; gap: 12px; }
+    .acc { border:1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow:hidden; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); }
+    .acc-btn { width:100%; text-align:left; padding:16px 18px; background:transparent; border:none; color: var(--text); display:flex; align-items:center; justify-content:space-between; gap: 12px; cursor:pointer; }
+    .acc-btn span { font-weight: 600; }
+    .acc-panel { max-height:0; overflow:hidden; transition: max-height .35s ease; border-top:1px solid rgba(255,255,255,0.06); padding: 0 18px; }
+    .acc-panel p { margin: 12px 0 16px; color: var(--muted); }
+
+    /* ============================
+       CTA SECTION
+       ============================ */
+    .cta { padding: 64px 0 80px 0; }
+    .cta .box { position:relative; border-radius: 16px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); background: radial-gradient(400px 200px at 85% 20%, rgba(0,247,167,0.15), rgba(0,247,167,0)), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); padding: 28px; display:flex; align-items:center; justify-content:space-between; gap: 18px; }
+    .cta h3 { margin:0; font-size: 24px; }
+
+    @media (max-width: 800px) { .cta .box { flex-direction: column; align-items: flex-start; } }
+
+    /* ============================
+       FOOTER
+       ============================ */
+    .footer { padding: 36px 0 60px; color: var(--muted); }
+    .footer .cols { display:grid; grid-template-columns: 2fr 1fr 1fr; gap: 18px; }
+    .footer a { color: var(--muted); text-decoration:none; }
+    .footer a:hover { color: var(--text); }
+    .copyright { border-top:1px solid rgba(255,255,255,0.06); margin-top: 18px; padding-top: 18px; font-size: 13px; color: #7d8796; }
+
+    @media (max-width: 900px) { .footer .cols { grid-template-columns: 1fr; } }
+  
+  
+  
+
+  
+  
+  
+  
+  
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Has Dominik Wajda's Battery Exploded?</h1>
-    <div class="status">
-      <p>Current Status: Not exploded</p><small class="lastupdated">last updated: Monday 3rd of February 2025 at 21:59:26 UTC+0000</small>
+  <!-- Background particles canvas -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- ============================ -->
+  <!-- NAVIGATION                   -->
+  <!-- ============================ -->
+  <div class="nav-wrap" id="nav">
+    <div class="container nav">
+      <a href="#home" class="brand" aria-label="c4.epicsite.xyz home">
+        <!-- Simple neon logo (inline SVG) -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M3 12a9 9 0 1 1 18 0" stroke="url(#g)" stroke-width="2" stroke-linecap="round" />
+          <path d="M7 12a5 5 0 1 1 10 0" stroke="url(#g)" stroke-width="2" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="24" y2="24">
+              <stop stop-color="#00f7a7"/>
+              <stop offset="1" stop-color="#6ee7ff"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>c4.epicsite.xyz</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#home">Home</a>
+        <a href="#description">Description</a>
+        <a href="#specs">Specs</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#safety">Safety</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="mobileMenu" aria-expanded="false">☰</button>
     </div>
-    <div class="slideshow-container">
-      
-      <div class="mySlides fade">
-        <div class="numbertext">1 / 2</div>
-        <img src="https://github.com/GoldDominik893/file-hosting/blob/main/c4/IMG_6824.jpg?raw=true" style="width:100%">
-        <div class="text">A shot of the battery on it's side</div>
-      </div>
-      
-      <div class="mySlides fade">
-        <div class="numbertext">2 / 2</div>
-        <img src="https://github.com/GoldDominik893/file-hosting/blob/main/c4/IMG_6825.jpg?raw=true" style="width:100%">
-        <div class="text">Close up shot of the battery's XT60 Connectors at the front</div>
-      </div>
-      <a class="prev" onclick="plusSlides(-1)">❮</a>
-      <a class="next" onclick="plusSlides(1)">❯</a>
-      </div>
-      
-      <br>
-      <div style="margin-left: auto; margin-right: auto; max-width: 750px; text-align: justify;">
-        <h3>Description</h3>
-        <p>This battery has a capacity of around 40Ah or 40,000 mAh at 3.7v which is from 2 LiPO batteries connected in parallel.
-        The battery has 2 XT60 connectors and allows a maximum current of 28 Amps which equates to ~103W (3.7v x 28A = 103.6W)
-        and it also blew up my multimeters fuse when i was testing it. LiPO batteries are Dangerous! Thats why this battery is
-        encased in hot glue and plastic which helps protect it from stabbing.</p></div>
-      
-
-
-      <script src="script.js"></script>
+    <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Mobile Menu">
+      <a href="#home">Home</a>
+      <a href="#description">Description</a>
+      <a href="#specs">Specs</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#safety">Safety</a>
+      <a href="#faq">FAQ</a>
+    </div>
   </div>
+
+  <!-- ============================ -->
+  <!-- HERO                         -->
+  <!-- ============================ -->
+  <header id="home" class="hero">
+    <div class="container content">
+      <div data-aos="fade-right">
+        <div class="eyebrow"><span class="dot"></span> Battery Status Monitor</div>
+        <h1 class="title">Has Dominik Wajda’s Battery Exploded?</h1>
+        <p class="subtitle">Live status with crisp telemetry. Purpose-built for clarity, safety, and just a hint of neon.
+        </p>
+        <div class="status-row">
+          <span class="status-badge" id="statusBadge"><span class="status-dot"></span> Not Exploded</span>
+          <span class="tag">Last updated: <time id="lastUpdated" datetime="2025-09-10T09:11:26Z">Wed 10 Sep 2025 - 09:11:26</time></span>
+        </div>
+        <div class="cta-row" style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn btn-cta" href="#gallery">View Gallery</a>
+          <a class="btn" href="#specs">See Specs</a>
+        </div>
+      </div>
+
+      <div class="media" data-aos="fade-left">
+        <div class="hero-card">
+          <img src="IMG_6824.jpg" alt="Primary battery photo" />
+        </div>
+        <div class="glow-ring" aria-hidden="true"></div>
+      </div>
+    </div>
+  </header>
+
+
+
+
+
+
+  <!-- ============================ -->
+  <!-- DESCRIPTION                  -->
+  <!-- ============================ -->
+  <section id="description" class="description">
+    <div class="container">
+      <div class="section-head">
+        <h2>Description</h2>
+        <span class="tag">Transparent process</span>
+      </div>
+        <div class="spec" data-aos="fade-up">
+          <p>
+            This battery pack is a DIY project built from three LiPo cells arranged in parallel, encased in a hot-glue shell for added puncture resistance. It features dual XT60 connectors for versatile connectivity and has been tested to handle peak currents of up to 100A, however the battery will heat up and may cause a fire, I would only ever draw a maximum of 10A from it. The pack is designed for low power applications, such as charging a phone etc, with a total capacity of 148Wh, making it suitable for various electronics projects. Safety is a priority; the pack includes basic protective measures, but users should still follow best practices when handling and charging LiPo batteries.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+
+  
+  <!-- ============================ -->
+  <!-- TECH SPECS                   -->
+  <!-- ============================ -->
+  <section id="specs" class="specs">
+    <div class="container">
+      <div class="section-head">
+        <h2>Technical Specifications</h2>
+      </div>
+      <div class="spec-grid">
+        <div class="spec" data-aos="fade-up">
+          <h4>Capacity</h4>
+          <div class="kpi">148 Wh</div>
+          <p>148Wh comes from 3 LiPo cells in parallel totalling to around 40Ah at 3.7V.</p>
+        </div>
+        <div class="spec" data-aos="fade-up" data-aos-delay="50">
+          <h4>Max Current</h4>
+          <div class="kpi">~100A</div>
+          <p>I tested this by shorting the battery for 0.5s and measuring with a DC Clamp Meter. Peak draw is about 370W. Recommended draw is around 10A.</p>
+        </div>
+        <div class="spec" data-aos="fade-up" data-aos-delay="100">
+          <h4>Outputs</h4>
+          <div class="kpi">2 × XT60</div>
+          <p>Dual I/O for more connectivity..</p>
+        </div>
+        <div class="spec" data-aos="fade-up">
+          <h4>Build</h4>
+          <div class="kpi">Hot-glue shell</div>
+          <p>Encased in hot glue & plastic for puncture resistance.</p>
+        </div>
+        <div class="spec" data-aos="fade-up" data-aos-delay="50">
+          <h4>Incidents</h4>
+          <div class="kpi">1× multimeter fuse blown</div>
+          <p>During my non professional tesing of the max current I had been using a multimeter to test the current output.</p>
+        </div>
+        <div class="spec" data-aos="fade-up" data-aos-delay="100">
+          <h4>Status</h4>
+          <div class="kpi" id="specStatus">OK</div>
+          <p>Current state: Not exploded.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- ============================ -->
+  <!-- SHOWCASE / GALLERY           -->
+  <!-- ============================ -->
+  <section id="gallery" class="showcase">
+    <div class="container">
+      <div class="section-head">
+        <h2>Gallery</h2>
+        <span class="tag">Click an image to zoom</span>
+      </div>
+      <div class="carousel" data-aos="fade-up" aria-roledescription="carousel" aria-label="Battery images">
+        <div class="carousel-track" id="carouselTrack">
+          <div class="carousel-slide"><img src="IMG_6824.jpg" alt="Battery photo 1" /></div>
+          <div class="carousel-slide"><img src="IMG_6825.jpg" alt="Battery photo 2" /></div>
+        </div>
+        <button class="c-btn c-prev" aria-label="Previous image" id="cPrev">‹</button>
+        <button class="c-btn c-next" aria-label="Next image" id="cNext">›</button>
+        <div class="dots" role="tablist" aria-label="Carousel dots">
+          <button class="dot active" aria-label="Go to slide 1" data-index="0"></button>
+          <button class="dot" aria-label="Go to slide 2" data-index="1"></button>
+          <button class="dot" aria-label="Go to slide 3" data-index="2"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox overlay -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+      <button class="close" id="lbClose" aria-label="Close preview">✕</button>
+      <img src="" alt="Expanded gallery item" id="lbImg" />
+    </div>
+  </section>
+
+  <!-- ============================ -->
+  <!-- SAFETY BAND                  -->
+  <!-- ============================ -->
+  <section id="safety" class="safety">
+    <div class="container">
+      <div class="band" data-aos="fade-up">
+        <div class="band-inner">
+          <div class="icon">⚠️</div>
+          <p><strong>Safety Notice:</strong> LiPo batteries can be hazardous. Use proper charging methods, avoid punctures, and never leave charging unattended. This pack is reinforced, but caution is still required.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ -->
+  <!-- FAQ                          -->
+  <!-- ============================ -->
+  <section id="faq" class="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>FAQ</h2>
+        <span class="tag">Everything you’re about to ask</span>
+      </div>
+      <div class="accordion" role="list">
+        <div class="acc" data-aos="fade-up" role="listitem">
+          <button class="acc-btn" aria-expanded="false"><span>Is the battery safe to use daily?</span><span>+</span></button>
+          <div class="acc-panel"><p>Of course the battery is safe to use daily, except you have to kep in mind the fact that using it everyday will impact the number of charge cycles used. It causes it to lose capacity over time.</p></div>
+        </div>
+        <div class="acc" data-aos="fade-up" role="listitem">
+          <button class="acc-btn" aria-expanded="false"><span>Can I increase output current?</span><span>+</span></button>
+          <div class="acc-panel"><p>What even needs to run more than 10A at 3.7v? Increasing the rated current would mean that I need to change the cells for high current cells, these typically have a much lower capacity..</p></div>
+        </div>
+        <div class="acc" data-aos="fade-up" role="listitem">
+          <button class="acc-btn" aria-expanded="false"><span>What’s with the hot glue?</span><span>+</span></button>
+          <div class="acc-panel"><p>It’s a low-tech layer for mechanical damping and minor puncture resistance. It is not a substitute for proper cell housings or hard shells.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ -->
+  <!-- CTA                          -->
+  <!-- ============================ -->
+  <section class="cta">
+    <div class="container">
+      <div class="box" data-aos="fade-up">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Soon</div>
+          <h3>Upcoming Feature</h3>
+          <p class="muted">I will hook up the status of the battery to an API so that if it does ever explode if ever, then it will be easy to update it here.</p>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn btn-cta" href="#home">Back to Top</a>
+          <a class="btn" href="#specs">Review Specs</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ -->
+  <!-- FOOTER                       -->
+  <!-- ============================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="cols">
+        <div>
+          <a href="#home" class="brand" style="margin-bottom:10px; display:inline-flex;">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:22px;height:22px;">
+              <path d="M3 12a9 9 0 1 1 18 0" stroke="url(#g2)" stroke-width="2" stroke-linecap="round" />
+              <path d="M7 12a5 5 0 1 1 10 0" stroke="url(#g2)" stroke-width="2" stroke-linecap="round" />
+              <defs>
+                <linearGradient id="g2" x1="0" y1="0" x2="24" y2="24">
+                  <stop stop-color="#00f7a7"/>
+                  <stop offset="1" stop-color="#6ee7ff"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span>c4.epicsite.xyz</span>
+          </a>
+          <p class="muted">What a cool website.</p>
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px;">Sections</h4>
+          <nav aria-label="Footer">
+            <a href="#home">Home</a><br />
+            <a href="#description">Description</a><br />
+            <a href="#specs">Specs</a><br />
+            <a href="#gallery">Gallery</a><br />
+            <a href="#safety">Safety</a><br />
+            <a href="#faq">FAQ</a>
+          </nav>
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px;">Meta</h4>
+          <p class="muted">Status: <span id="footerStatus">Not exploded</span></p>
+          <p class="muted">Updated: <time id="footerUpdated" datetime="2025-09-10T9:11:26Z">Wed 10 Sep 2025 - 09:11:26</time></p>
+        </div>
+      </div>
+      <div class="copyright">
+        © 2025 Battery Status Monitor · All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================ -->
+  <!-- SCRIPTS                      -->
+  <!-- ============================ -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    // Init AOS
+    AOS.init({ duration: 800, easing: 'ease-out', once: true });
+
+    // ===========================
+    // MOBILE MENU TOGGLE
+    // ===========================
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    menuBtn.addEventListener('click', () => {
+      const open = mobileMenu.style.display === 'block';
+      mobileMenu.style.display = open ? 'none' : 'block';
+      menuBtn.setAttribute('aria-expanded', String(!open));
+    });
+    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileMenu.style.display = 'none'));
+
+    // ===========================
+    // SCROLL SPY for top nav
+    // ===========================
+    const spyLinks = document.querySelectorAll('.nav-links a');
+    const ids = Array.from(spyLinks).map(a => a.getAttribute('href'));
+    const sections = ids.map(id => document.querySelector(id));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const idx = sections.indexOf(entry.target);
+        if (idx >= 0) {
+          const link = spyLinks[idx];
+          if (entry.isIntersecting) {
+            spyLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+          }
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+    sections.forEach(sec => sec && observer.observe(sec));
+
+    // ===========================
+    // CAROUSEL + LIGHTBOX
+    // ===========================
+    const track = document.getElementById('carouselTrack');
+    const slides = Array.from(track.children);
+    const prevBtn = document.getElementById('cPrev');
+    const nextBtn = document.getElementById('cNext');
+    const dots = Array.from(document.querySelectorAll('.dot'));
+    let index = 0;
+
+    function goTo(i) {
+      index = (i + slides.length) % slides.length;
+      track.style.transform = `translateX(-${index * 100}%)`;
+      dots.forEach((d, di) => d.classList.toggle('active', di === index));
+    }
+    prevBtn.addEventListener('click', () => goTo(index - 1));
+    nextBtn.addEventListener('click', () => goTo(index + 1));
+    dots.forEach(d => d.addEventListener('click', e => goTo(+e.currentTarget.dataset.index)));
+
+    // Lightbox
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lbImg');
+    const lbClose = document.getElementById('lbClose');
+    slides.forEach(slide => {
+      const img = slide.querySelector('img');
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', () => { lbImg.src = img.src; lb.classList.add('open'); });
+    });
+    lbClose.addEventListener('click', () => lb.classList.remove('open'));
+    lb.addEventListener('click', (e) => { if (e.target === lb) lb.classList.remove('open'); });
+
+    // ===========================
+    // STATUS TOGGLE (demo logic)
+    // ===========================
+    const statusBadge = document.getElementById('statusBadge');
+    const specStatus = document.getElementById('specStatus');
+    const footerStatus = document.getElementById('footerStatus');
+
+    // Example: initialize from query ?status=exploded
+    const params = new URLSearchParams(location.search);
+    const exploded = params.get('status') === 'exploded';
+    function setStatus(isExploded) {
+      if (isExploded) {
+        statusBadge.innerHTML = '<span class="status-dot" style="background: var(--danger); box-shadow:0 0 14px var(--danger);"></span> Exploded';
+        statusBadge.style.background = 'rgba(239,68,68,0.12)';
+        statusBadge.style.borderColor = 'rgba(239,68,68,0.35)';
+        statusBadge.style.color = '#ffd1d1';
+        specStatus.textContent = 'Exploded';
+        footerStatus.textContent = 'Exploded';
+      } else {
+        statusBadge.innerHTML = '<span class="status-dot"></span> Not Exploded';
+        statusBadge.style.background = 'rgba(0,247,167,0.12)';
+        statusBadge.style.borderColor = 'rgba(0,247,167,0.35)';
+        statusBadge.style.color = '#8affd9';
+        specStatus.textContent = 'OK';
+        footerStatus.textContent = 'Not exploded';
+      }
+    }
+    setStatus(exploded);
+
+    // ===========================
+    // BACKGROUND PARTICLES
+    // ===========================
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    let w, h; let particles = [];
+
+    function resize() {
+      w = canvas.width = Math.floor(window.innerWidth * DPR);
+      h = canvas.height = Math.floor(window.innerHeight * DPR);
+    }
+    window.addEventListener('resize', resize); resize();
+
+    function makeParticles(count = Math.floor((window.innerWidth * window.innerHeight) / 28000)) {
+      particles = Array.from({ length: count }).map(() => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.08 * DPR,
+        vy: (Math.random() - 0.5) * 0.08 * DPR,
+        r: (Math.random() * 1.2 + 0.4) * DPR,
+        a: Math.random() * 0.5 + 0.2
+      }));
+    }
+    makeParticles();
+
+    function tick() {
+      ctx.clearRect(0, 0, w, h);
+      // soft vignette
+      const grad = ctx.createRadialGradient(w*0.15, h*0.05, 0, w*0.15, h*0.05, Math.max(w,h));
+      grad.addColorStop(0, 'rgba(110,231,255,0.05)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+
+      ctx.globalCompositeOperation = 'lighter';
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = w; if (p.x > w) p.x = 0; if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(0,247,167,${p.a})`;
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = 'source-over';
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    // ===========================
+    // ACCESSIBILITY: Reduce motion
+    // ===========================
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches) {
+      // Disable AOS animations and heavy background motion if user prefers less motion
+      AOS.init({ disable: true });
+    }
+
+
+
+
+document.querySelectorAll(".acc-btn").forEach(button => {
+  button.addEventListener("click", () => {
+    const panel = button.nextElementSibling;
+    const expanded = button.getAttribute("aria-expanded") === "true";
+
+    // Close all
+    document.querySelectorAll(".acc-btn").forEach(btn => {
+      btn.setAttribute("aria-expanded", "false");
+      btn.nextElementSibling.style.maxHeight = null;
+      btn.nextElementSibling.classList.remove("open");
+    });
+
+    // Open the clicked one if it wasn’t already open
+    if (!expanded) {
+      button.setAttribute("aria-expanded", "true");
+      panel.style.maxHeight = panel.scrollHeight + "px";
+      panel.classList.add("open");
+    }
+  });
+});
+
+  </script>
 </body>
 </html>
